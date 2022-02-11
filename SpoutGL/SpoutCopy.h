@@ -63,6 +63,12 @@ class SPOUT_DLLEXP spoutCopy {
 		void memcpy_sse2(void* dst, const void* src, size_t size) const;
 
 		// Copy rgba buffers line by line allowing for source pitch using the fastest method
+		//void CTest01(const void* source, void* dest, unsigned int width, unsigned int height) const;
+		void CTest01(const void* rgba_source, void* rgba_dest, RECT crop_rectangle, unsigned int width, unsigned int height) const;
+
+		void CTest01(const void* rgba_source, void* rgba_dest, unsigned int width, unsigned int height) const;
+
+		// Copy rgba buffers line by line allowing for source pitch using the fastest method
 		void rgba2rgba(const void* source, void* dest, unsigned int width, unsigned int height,
 			unsigned int sourcePitch, bool bInvert = false) const;
 

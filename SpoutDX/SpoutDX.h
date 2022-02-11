@@ -107,6 +107,8 @@ class SPOUT_DLLEXP spoutDX {
 	// Receive a texture from a sender
 	bool ReceiveTexture(ID3D11Texture2D** ppTexture);
 	// Receive an image
+	bool ReceiveImage(unsigned char* pixels, unsigned char* pixelscrop, RECT crop_rectangle, unsigned int width, unsigned int height, bool bRGB = false, bool bInvert = false);
+	// Receive an image
 	bool ReceiveImage(unsigned char * pixels, unsigned int width, unsigned int height, bool bRGB = false, bool bInvert = false);
 	// Open sender selection dialog
 	void SelectSender();
@@ -279,6 +281,12 @@ protected :
 	bool ReceiveSenderData();
 	void CreateReceiver(const char * sendername, unsigned int width, unsigned int height, DWORD dwFormat);
 	
+	// Read pixels from a staging texture
+	bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels, unsigned char* destpixelscrop, RECT crop_rectangle,
+		unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap);
+	//bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels, unsigned char* destpixelscrop,
+	//	unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap);
+
 	// Read pixels from a staging texture
 	bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels,
 		unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap);

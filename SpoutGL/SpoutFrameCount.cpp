@@ -658,7 +658,7 @@ bool spoutFrameCount::CheckAccess()
 			break;
 		case WAIT_TIMEOUT: // The time-out interval elapsed, and the object's state is non-signalled.
 			// This can happen the first time a receiver connects to a sender
-			// SpoutLogError("CheckAccess - WAIT_TIMEOUT");
+			SpoutLogError("CheckAccess - WAIT_TIMEOUT");
 			break;
 		case WAIT_FAILED: // Could use call GetLastError
 			SpoutLogError("spoutFrameCount::CheckAccess - WAIT_FAILED");

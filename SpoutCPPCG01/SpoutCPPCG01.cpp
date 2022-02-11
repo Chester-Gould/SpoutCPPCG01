@@ -19,6 +19,8 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 spoutDX receiver;                      // Receiver object
 HWND g_hWnd = NULL;                    // Window handle
 unsigned char* pixelBuffer = nullptr;  // Receiving pixel buffer
+unsigned char* pixelBuffercrop = nullptr;  // Receiving pixel buffer
+RECT crop_rectangle;  // Receiving crop_rectangle
 unsigned char* bgraBuffer = nullptr;   // Conversion buffer if required
 unsigned char g_SenderName[256];       // Received sender name
 unsigned int g_SenderWidth = 0;        // Received sender width
@@ -116,6 +118,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	while (WM_QUIT != msg.message)
 	{
 		auto t1 = high_resolution_clock::now();
+		// 100x100 rectangle starting at x,y 100,100
+		crop_rectangle.left = 100;
+		crop_rectangle.right = 200;
+		crop_rectangle.top = 100;
+		crop_rectangle.bottom = 200;
+
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
@@ -145,7 +153,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// SPOUT
 	if (pixelBuffer) delete pixelBuffer;
 	if (bgraBuffer) delete bgraBuffer;
-
+	if (pixelBuffercrop) delete pixelBuffercrop;
+	
 	// Release the receiver
 	receiver.ReleaseReceiver();
 
@@ -163,8 +172,8 @@ void Render()
 	// ReceiveImage handles sender detection, creation and update.
 	// Because Windows bitmaps are bottom-up, the rgba pixel buffer is flipped by the 
 	// ReceiveImage function ready for WM_PAINT but it could also be drawn upside down
-	if (receiver.ReceiveImage(pixelBuffer, g_SenderWidth, g_SenderHeight, false, true)) { // RGB = false, invert = true
-
+	//if (receiver.ReceiveImage(pixelBuffer, g_SenderWidth, g_SenderHeight, false, true)) { // RGB = false, invert = true
+	if (receiver.ReceiveImage(pixelBuffer,pixelBuffercrop, crop_rectangle, g_SenderWidth, g_SenderHeight, false, true)) { // RGB = false, invert = true
 		// IsUpdated() returns true if the sender has changed
 		if (receiver.IsUpdated()) {
 
@@ -176,9 +185,19 @@ void Render()
 			g_SenderHeight = receiver.GetSenderHeight();
 			g_SenderFormat = receiver.GetSenderFormat();
 
+			crop_rectangle.left = 100;
+			crop_rectangle.right = 200;
+			crop_rectangle.top = 100;
+			crop_rectangle.bottom = 200;
+
 			// Update the receiving buffer
 			if (pixelBuffer)	delete pixelBuffer;
 			pixelBuffer = new unsigned char[g_SenderWidth * g_SenderHeight * 4];
+
+			// Update the receiving buffer
+			if (pixelBuffercrop)	delete pixelBuffercrop;
+			//pixelBuffercrop = new unsigned char[g_SenderWidth * g_SenderHeight * 4];
+			pixelBuffercrop = new unsigned char[(crop_rectangle.right - crop_rectangle.left) * (crop_rectangle.bottom - crop_rectangle.top) * 4];
 
 			// Update the rgba > bgra conversion buffer
 			if (bgraBuffer) delete bgraBuffer;
@@ -374,7 +393,8 @@ public:
 	}
 
 	//static bool Save(Image* im, TCHAR* filename)
-	static bool Save(Image* im, const wchar_t* filename)
+	//static bool Save(Image* im, const wchar_t* filename)
+	static bool Save(Bitmap* im, const wchar_t* filename)
 	{
 		ImageEncoders encoders;
 
@@ -471,7 +491,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else {
 				BITMAPINFO bmi;
 				ZeroMemory(&bmi, sizeof(BITMAPINFO));
-
+				
 				bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 				bmi.bmiHeader.biSizeImage = (LONG)(g_SenderWidth * g_SenderHeight * 4); // Pixel buffer size
 				bmi.bmiHeader.biWidth = (LONG)g_SenderWidth;   // Width of buffer
@@ -480,21 +500,104 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				bmi.bmiHeader.biBitCount = 32;
 				bmi.bmiHeader.biCompression = BI_RGB;
 
+
+				BITMAPINFO bmic;
+				ZeroMemory(&bmic, sizeof(BITMAPINFO));
+
+				bmic.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+				bmic.bmiHeader.biSizeImage = (LONG)((crop_rectangle.right - crop_rectangle.left) * (crop_rectangle.bottom - crop_rectangle.top) * 4); // Pixel buffer size
+				bmic.bmiHeader.biWidth = (LONG)(crop_rectangle.right - crop_rectangle.left);   // Width of buffer
+				bmic.bmiHeader.biHeight = (LONG)(crop_rectangle.bottom - crop_rectangle.top);  // Height of buffer
+				bmic.bmiHeader.biPlanes = 1;
+				bmic.bmiHeader.biBitCount = 32;
+				bmic.bmiHeader.biCompression = BI_RGB;
+
 				// If the received sender format is BGRA or BGRX it's a natural match
 				if (g_SenderFormat == 87 || g_SenderFormat == 88) {
 					// Very fast (< 1msec at 1280x720)
 					// StretchDIBits adapts the pixel buffer received from the sender
 					// to the window size. The sender can be resized or changed.
 
+					
 					SetStretchBltMode(hdc, COLORONCOLOR); // Fastest method
+					
 					StretchDIBits(hdc,
 						0, 0, (dr.right - dr.left), (dr.bottom - dr.top), // destination rectangle 
 						0, 0, (g_SenderWidth), (g_SenderHeight), // source rectangle 
 						pixelBuffer,
 						&bmi, DIB_RGB_COLORS, SRCCOPY);
+					
+					/*
+					Graphics g(hdc);
+					//Gdiplus::Bitmap* imdst = new Gdiplus::Bitmap(&bmic, pixelBuffercrop);
+					Gdiplus::Bitmap* imsrc = new Gdiplus::Bitmap(&bmi, pixelBuffer);
+
+					if (imsrc->GetLastStatus() != Gdiplus::Ok) {
+						system("start ."); // opens current folder in windows explorer
+					}
+					else
+					{
+						wchar_t fn[32];
+						wsprintf(fn, L"..\\tmp\\src_%d.jpg", FPSCounter);
+						ImageEncoders::Save(imsrc, fn);
+					}
+					*/
+
+					/*
+					if (imdst->GetLastStatus() != Gdiplus::Ok) {
+						system("start ."); // opens current folder in windows explorer
+					}
+					else
+					{
+						wchar_t fn[32];
+						wsprintf(fn, L"..\\tmp\\dst_%d.jpg", FPSCounter);
+						ImageEncoders::Save(imdst, fn);
+					}
+					*/
+
+					/*
+					RECT newrect;
+					newrect.left = 100;
+					newrect.right = 200;
+					newrect.top = 100;
+					newrect.bottom = 200;
+
+					BITMAPINFO bmic;
+					ZeroMemory(&bmic, sizeof(BITMAPINFO));
+					bmic.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+					bmic.bmiHeader.biSizeImage = (LONG)((newrect.right - newrect.left) * (newrect.bottom - newrect.top) * 4);
+					bmic.bmiHeader.biWidth = (LONG)(newrect.right - newrect.left);
+					bmic.bmiHeader.biHeight = (LONG)(newrect.bottom - newrect.top);
+					bmic.bmiHeader.biPlanes = 1;
+					bmic.bmiHeader.biBitCount = 32;
+					bmic.bmiHeader.biCompression = BI_RGB;
+
+					PAINTSTRUCT psc;
+					HDC hdcc = CreateCompatibleDC(hdc);
+					BitBlt(hdcc, 0, 0, (newrect.right - newrect.left), (newrect.bottom - newrect.top), hdc, 0, 0, SRCCOPY);
+					Graphics g(hdcc);
+					Gdiplus::Bitmap* im = new Gdiplus::Bitmap(&bmic, pixelBuffer);
+
+					*/
+
+					/*
+					Graphics g(hdc);
+					Gdiplus::Bitmap* im = new Gdiplus::Bitmap(&bmi, pixelBuffer);
+					
+					Gdiplus::Bitmap* bmpdst = new Gdiplus::Bitmap(20, 16);
+					Graphics* graph = Graphics::FromImage(im);
+					Rect rect = Rect(200, 40, 20, 16);
+					g.DrawImage(im, rect, 80, 70, 80, 45, UnitPixel);
+					//graph->DrawImage(im, 10, 10);
+					wchar_t fn[32];
+					wsprintf(fn, L"..\\tmp\\bmpsrc_%d.jpg", FPSCounter);
+					//Bitmap* bmpdstptr = &bmpdst;
+					ImageEncoders::Save(bmpdst, fn);
+					*/
+
 
 					//
-					
+					/*
 					LONG left = 10;
 					LONG top = 10;
 					LONG width = 100;
