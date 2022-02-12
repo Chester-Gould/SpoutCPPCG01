@@ -149,7 +149,9 @@
     <ClInclude Include="..\SpoutGL\SpoutSenderNames.h" />
     <ClInclude Include="..\SpoutGL\SpoutSharedMemory.h" />
     <ClInclude Include="..\SpoutGL\SpoutUtils.h" />
+    <ClInclude Include="CImg.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="cImage.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SpoutCPPCG01.h" />
     <ClInclude Include="targetver.h" />
@@ -162,6 +164,7 @@
     <ClCompile Include="..\SpoutGL\SpoutSenderNames.cpp" />
     <ClCompile Include="..\SpoutGL\SpoutSharedMemory.cpp" />
     <ClCompile Include="..\SpoutGL\SpoutUtils.cpp" />
+    <ClCompile Include="cImage.cpp" />
     <ClCompile Include="SpoutCPPCG01.cpp" />
   </ItemGroup>
   <ItemGroup>

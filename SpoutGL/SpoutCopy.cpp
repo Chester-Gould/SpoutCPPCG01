@@ -1008,62 +1008,269 @@ void spoutCopy::rgba2rgba(const void* rgba_source, void* rgba_dest,
 	}
 }
 
+void spoutCopy::CTest01(const void* rgba_source, void* rgba_dest, void* rgba_dest_crop, RECT crop_rectangle, unsigned int width, unsigned int height) const
+{
+	try {
+
+		/*
+		//##########################################################################################################
+		//Regular Full Size - Functional - Probably a lot slower and inverted
+		int dstCounter = 0;
+		int srcCounter = 0;
+
+		const unsigned long rgbasrcsize = width * height * 4;
+		const unsigned long rgbasrcpitch = width * 4;
+
+		// Start of buffers
+		auto rgbasrc = static_cast<const unsigned char*>(rgba_source); // BGRA
+		auto rgbadst = static_cast<unsigned char*>(rgba_dest); // BGR
+
+		//Invert
+		//rgbadst += rgbasrcsize; // end of rgbadst buffer
+		//rgbadst -= rgbasrcpitch; // beginning of last rgbadst line
+
+		// For all rows
+		for (unsigned int y = 0; y < height; y++) {
+			for (unsigned int x = 0; x < width; x++) {
+				// rgba source - rgba dest
+				rgbadst[dstCounter + 3] = rgbasrc[srcCounter + 3]; // alpha
+				rgbadst[dstCounter + 2] = rgbasrc[srcCounter + 2]; // blue
+				rgbadst[dstCounter + 1] = rgbasrc[srcCounter + 1]; // grn
+				rgbadst[dstCounter + 0] = rgbasrc[srcCounter + 0]; // reg
+				// logged a needed pixel, move to next pixel in destination
+				//rgbadstcrop += 4;
+				dstCounter += 4;
+				srcCounter += 4;
+				/*
+				*(rgbadst + 3) = *(rgbasrc + 3); // alpha
+				*(rgbadst + 2) = *(rgbasrc + 2); // blue
+				*(rgbadst + 1) = *(rgbasrc + 1); // grn
+				*(rgbadst + 0) = *(rgbasrc + 0); // red
+				rgbadst += 4;
+				rgbasrc += 4;
+				*
+			}
+			// move up a line for invert
+			//rgbadst -= (rgbasrcpitch * 2); // move up a line for invert
+		}
+		//##########################################################################################################
+		*/
+
+
+		// ################## CROP TESTING  #########################
+		/*
+		unsigned int cw = (crop_rectangle.right - crop_rectangle.left);
+		unsigned int ch = (crop_rectangle.bottom - crop_rectangle.top);
+
+		size_t cropsize = cw * ch * 4;
+		uint8_t* croppedImage = new uint8_t[cropsize];
+		memset(croppedImage, 0, cropsize);
+
+		for (uint16_t y = 0; y < ch; ++y) {
+			if (y + 100 >= height) { break; }
+			for (uint16_t x = 0; x < cw; ++x) {
+				if (x + 100 >= width) { break; }
+				memcpy(&croppedImage[(x + y * cw) * 4], &rgbasrc[(x + 100 + (y + 100) * width) * 4], 4);
+			}
+		}
+		
+		//auto rgbadstcrop = static_cast<unsigned char*>(rgba_dest_crop); // RGBA
+
+		//auto rgbadstcrop = static_cast<unsigned char*>(croppedImage);
+		rgba_dest_crop = croppedImage;
+
+		//data = croppedImage;
+		//croppedImage = nullptr;
+		*/
+
+		
+		// -- Returns distorted image, right size, but black lines all over
+		//Cropped Size
+
+		int dstCounter = 0;
+		int srcCounter = 0;
+
+		unsigned int cw = (crop_rectangle.right - crop_rectangle.left);
+		unsigned int ch = (crop_rectangle.bottom - crop_rectangle.top);
+
+		long rect_width = (crop_rectangle.right - crop_rectangle.left);
+		long rect_height = (crop_rectangle.bottom - crop_rectangle.top);
+
+		const unsigned long rgbadstsize = cw * ch * 4;
+		const unsigned long rgbadstpitch = cw * 4;
+
+		auto rgbasrc = static_cast<const unsigned char*>(rgba_source); // RGBA
+		auto rgbadstcrop = static_cast<unsigned char*>(rgba_dest_crop); // RGBA
+		
+		//Invert
+		rgbadstcrop += rgbadstsize; // end of rgbadst buffer
+		rgbadstcrop -= rgbadstpitch; // beginning of last rgbadst line
+
+		dstCounter = 0;
+		srcCounter = 0;
+
+		// For all rows
+		for (unsigned int y = 0; y < 100; y++) {
+			for (unsigned int x = 0; x < 100; x++) {
+				// TODO: Need to invert the rectangle too
+				//rgbadstcrop[dstCounter + 3] = rgbasrc[srcCounter + 3]; // alpha
+				//rgbadstcrop[dstCounter + 2] = rgbasrc[srcCounter + 2]; // blue
+				//rgbadstcrop[dstCounter + 1] = rgbasrc[srcCounter + 1]; // grn
+				//rgbadstcrop[dstCounter + 0] = rgbasrc[srcCounter + 0]; // reg
+				//rgbadstcrop[dstCounter + 3] = rgbasrc[srcCounter + 1]; // alpha
+				//rgbadstcrop[dstCounter + 2] = rgbasrc[srcCounter + 2]; // red .. adds red
+				//rgbadstcrop[dstCounter + 1] = rgbasrc[srcCounter + 1]; // grn
+				//rgbadstcrop[dstCounter + 0] = rgbasrc[srcCounter + 0]; // blue
+				//dstCounter += 3;
+				//srcCounter += 3;
+
+				*(rgbadstcrop + 3) = *(rgbasrc + 3); // alpha
+				*(rgbadstcrop + 2) = *(rgbasrc + 2); // blue
+				*(rgbadstcrop + 1) = *(rgbasrc + 1); // grn
+				*(rgbadstcrop + 0) = *(rgbasrc + 0); // red
+				rgbadstcrop += 4;
+				rgbasrc += 4;
+
+				//rgbasrc[srcCounter + 2]; == black
+				//rgbadstcrop[dstCounter + 2] = rgbasrc[srcCounter + 0]; // red .. adds red
+
+			} // next x
+
+			//rgbadst -= (rgbasrcpitch * 2);
+			rgbadstcrop -= (rgbadstpitch * 2); // move up a line for invert
+
+		} //next y
+		// ################## CROP TESTING  END #########################
+		
+		//##########################################################################################################
+		//Regular Full Size - Functional
+		// pitch = stride = row of bytes in an image, i.e. pixels in image from 1,1920, 1-y all x's
+		// *4 because each pixel has 4 values, R, G, B, A
+		const unsigned long rgbasrcsize = width * height * 4;
+		const unsigned long rgbasrcpitch = width * 4;
+
+		// Start of buffers
+		rgbasrc = static_cast<const unsigned char*>(rgba_source); // BGRA
+		auto rgbadst = static_cast<unsigned char*>(rgba_dest); // BGR
+
+		//Invert
+		rgbadst += rgbasrcsize; // end of rgbadst buffer
+		rgbadst -= rgbasrcpitch; // beginning of last rgbadst line
+
+		// For all rows
+		for (unsigned int y = 0; y < height; y++) {
+			for (unsigned int x = 0; x < width; x++) {
+				// rgba source - rgba dest
+				*(rgbadst + 3) = *(rgbasrc + 3); // alpha
+				*(rgbadst + 2) = *(rgbasrc + 2); // blue
+				*(rgbadst + 1) = *(rgbasrc + 1); // grn
+				*(rgbadst + 0) = *(rgbasrc + 0); // red
+				rgbadst += 4;
+				rgbasrc += 4;
+			}
+			// move up a line for invert
+			rgbadst -= (rgbasrcpitch * 2); // move up a line for invert
+		}
+		//##########################################################################################################
+		
+
+	}
+	catch (const std::exception& e) {
+		spoututils::SpoutLogWarning("spoutCopy::CTest01 - Crash at CTest01");
+	}
+}
 
 void spoutCopy::CTest01(const void* rgba_source, void* rgba_dest, RECT crop_rectangle, unsigned int width, unsigned int height) const
 {
-	// pitch = stride = row of bytes in an image, i.e. pixels in image from 1,1920, 1-y all x's
-	// *4 because each pixel has 4 values, R, G, B, A
-	long rect_width = (crop_rectangle.right - crop_rectangle.left);
-	long rect_height = (crop_rectangle.bottom - crop_rectangle.top);
+	try {
+		// pitch = stride = row of bytes in an image, i.e. pixels in image from 1,1920, 1-y all x's
+		// *4 because each pixel has 4 values, R, G, B, A
+		long rect_width = (crop_rectangle.right - crop_rectangle.left);
+		long rect_height = (crop_rectangle.bottom - crop_rectangle.top);
 
-	const unsigned long rgbasrcpitch = width * 4;
-	const unsigned long rgbasrcsize = width * height * 4;
+		const unsigned long rgbasrcsize = width * height * 4;
+		const unsigned long rgbasrcpitch = width * 4;
 
-	const unsigned long rgbadstpitch = rect_width * 4;
-	const unsigned long rgbadstsize = rect_width * rect_height * 4;
+		const unsigned long rgbadstsize = rect_width * rect_height * 4;
+		const unsigned long rgbadstpitch = rect_width * 4;
 
-	auto rgbasrc = static_cast<const unsigned char*>(rgba_source); // RGBA
-	auto rgbadst = static_cast<unsigned char*>(rgba_dest); // RGBA
+		//Start of Buffers
+		auto rgbasrc = static_cast<const unsigned char*>(rgba_source); // RGBA
+		auto rgbadst = static_cast<unsigned char*>(rgba_dest); // RGBA
 
- 	rgbadst += rgbadstsize;
-	rgbadst -= rgbadstpitch;
+		//Invert
+		rgbadst += rgbadstsize; // end of rgbadst buffer
+		rgbadst -= rgbadstpitch; // beginning of last rgbadst line
 
-	// For all rows
-	for (unsigned int y = 0; y < height; y++) {
-		for (unsigned int x = 0; x < width; x++) {
+		// For all rows
+		for (unsigned int y = 0; y < height; y++) {
+			for (unsigned int x = 0; x < width; x++) {
 
-			if (y >= crop_rectangle.top && y <= crop_rectangle.bottom) {
-				if (x >= crop_rectangle.left && x <= crop_rectangle.right) {
-					// Need to invert the rectangle too
-					*(rgbadst + 2) = *(rgbasrc + 2); // red
-					*(rgbadst + 1) = *(rgbasrc + 1); // grn
-					*(rgbadst + 0) = *(rgbasrc + 0); // blu
-					*(rgbadst + 3) = *(rgbasrc + 3); // alpha
-					// logged a needed pixel, move to next pixel in destination
-					rgbadst += 4;
+				if (y >= crop_rectangle.top && y < crop_rectangle.bottom) {
+					if (x >= crop_rectangle.left && x < crop_rectangle.right) {
+						// TODO: Need to invert the rectangle too
+						*(rgbadst + 3) = *(rgbasrc + 3); // alpha
+						*(rgbadst + 2) = *(rgbasrc + 2); // blue
+						*(rgbadst + 1) = *(rgbasrc + 1); // grn
+						*(rgbadst + 0) = *(rgbasrc + 0); // reg
+						// logged a needed pixel, move to next pixel in destination
+						rgbadst += 4;
+					}
 				}
-			}
-			//move to next pixel in source
-			rgbasrc += 4;
-		}
 
-		// move up a line for invert
-		//rgbadst -= (rgbasrcpitch * 2);
-		rgbadst -= (rgbadstpitch * 2);
+				//move to next pixel in source
+				rgbasrc += 4;
+
+			} // next x
+
+			rgbadst -= (rgbadstpitch * 2); // move up a line for invert
+
+		} //next y
 	}
-
-	// Increment to current line
-	// Pitch is line length in bytes. Divide by 4 to get the width in rgba pixels.
-
-	//source += (unsigned long)(y * sourcePitch / 4);
-	//dest += (unsigned long)(y * destPitch / 4);
-
-	// Copy the line as fast as possible
-	//CopyPixels((const unsigned char*)source, (unsigned char*)dest, width, 1);
+	catch (const std::exception& e) {
+		spoututils::SpoutLogWarning("spoutCopy::CTest01 - Crash at CTest01");
+	}
 }
 
-//Functional, gets image regular
+//Functional, gets image regular - This is FUNCTIONAL
+void spoutCopy::CTest01(const void* rgba_source, void* rgba_dest, unsigned int width, unsigned int height) const
+{
+	try {
+		// pitch = stride = row of bytes in an image, i.e. pixels in image from 1,1920, 1-y all x's
+		// *4 because each pixel has 4 values, R, G, B, A
+		const unsigned long rgbasrcsize = width * height * 4;
+		const unsigned long rgbasrcpitch = width * 4;
 
+		// Start of buffers
+		auto rgbasrc = static_cast<const unsigned char*>(rgba_source); // BGRA
+		auto rgbadst = static_cast<unsigned char*>(rgba_dest); // BGR
+
+		//Invert
+		rgbadst += rgbasrcsize; // end of rgbadst buffer
+		rgbadst -= rgbasrcpitch; // beginning of last rgbadst line
+
+		// For all rows
+		for (unsigned int y = 0; y < height; y++) {
+			for (unsigned int x = 0; x < width; x++) {
+				// rgba source - rgba dest
+				*(rgbadst + 3) = *(rgbasrc + 3); // alpha
+				*(rgbadst + 2) = *(rgbasrc + 2); // blue
+				*(rgbadst + 1) = *(rgbasrc + 1); // grn
+				*(rgbadst + 0) = *(rgbasrc + 0); // red
+				rgbadst += 4;
+				rgbasrc += 4;
+			}
+			// move up a line for invert
+			rgbadst -= (rgbasrcpitch * 2); // move up a line for invert
+		}
+	}
+	catch (const std::exception& e) {
+		spoututils::SpoutLogWarning("spoutCopy::CTest01 - Crash at CTest01");
+	}
+}
+
+/*
+//Functional, gets image regular - broken
 void spoutCopy::CTest01(const void* rgba_source, void* rgba_dest, unsigned int width, unsigned int height) const
 {
 	// pitch = stride = row of bytes in an image, i.e. pixels in image from 1,1920, 1-y all x's
@@ -1102,10 +1309,10 @@ void spoutCopy::CTest01(const void* rgba_source, void* rgba_dest, unsigned int w
 		//CopyPixels((const unsigned char*)source, (unsigned char*)dest, width, 1);
 	}
 }
+*/
 
-
-//Functional, gets image inverted and mirrored
 /*
+//Functional, gets image inverted and mirrored - broken
 void spoutCopy::CTest01(const void* rgba_source, void* rgba_dest, unsigned int width, unsigned int height) const
 {
 	// For all rows

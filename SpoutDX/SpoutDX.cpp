@@ -888,7 +888,9 @@ bool spoutDX::ReceiveImage(unsigned char* pixels, unsigned char* pixelscrop, REC
 				// Copy from the sender's shared texture to the first staging texture
 				m_pImmediateContext->CopyResource(m_pStaging[m_Index], m_pSharedTexture);
 				// Map and read from the second while the first is occupied
-				ReadPixelData(m_pStaging[m_NextIndex], pixels, pixelscrop, crop_rectangle, width, height, bRGB, bInvert, false);
+				//ReadPixelData(m_pStaging[m_NextIndex], pixels, pixelscrop, crop_rectangle, width, height, bRGB, bInvert, false);
+				ReadPixelData(m_pStaging[m_NextIndex], pixels, pixelscrop, crop_rectangle, width, height, bRGB, bInvert, false, false);
+				//ReadPixelData(m_pStaging[m_NextIndex], pixels, pixelscrop, crop_rectangle, width, height, bRGB, bInvert, false, true);
 			}
 			// Allow access to the shared texture
 			frame.AllowTextureAccess(m_pSharedTexture);
@@ -2071,7 +2073,7 @@ void spoutDX::CreateReceiver(const char* SenderName, unsigned int width, unsigne
 // bSwap - swap red/blue (BGRA/RGBA). Not available for re-sample
 //
 bool spoutDX::ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels, unsigned char* destpixelscrop, RECT crop_rectangle,
-	unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap)
+	unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap, bool IsTest)
 {
 	if (!m_pImmediateContext || !pStagingSource || !destpixels || !destpixelscrop)
 		return false;
@@ -2090,9 +2092,9 @@ bool spoutDX::ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* dest
 			// TODO : test rgba-rgba resample
 			// TODO : rgba2bgraResample
 			if (width != m_Width || height != m_Height) {
-				//spoutcopy.rgba2rgbaResample(mappedSubResource.pData, destpixels, m_Width, m_Height, mappedSubResource.RowPitch, width, height, bInvert);
-				spoutcopy.CTest01(mappedSubResource.pData, destpixels, m_Width, m_Height);
-				spoutcopy.CTest01(mappedSubResource.pData, destpixelscrop, crop_rectangle, m_Width, m_Height);
+				spoutcopy.rgba2rgbaResample(mappedSubResource.pData, destpixels, m_Width, m_Height, mappedSubResource.RowPitch, width, height, bInvert);
+				//spoutcopy.CTest01(mappedSubResource.pData, destpixels, m_Width, m_Height);
+				//spoutcopy.CTest01(mappedSubResource.pData, destpixelscrop, crop_rectangle, m_Width, m_Height);
 			}
 			else {
 				if (bSwap) {
@@ -2100,9 +2102,27 @@ bool spoutDX::ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* dest
 				}
 				else
 				{
-					//spoutcopy.rgba2rgba(mappedSubResource.pData, destpixels, width, height, mappedSubResource.RowPitch, bInvert);
-					spoutcopy.CTest01(mappedSubResource.pData, destpixels, m_Width, m_Height);
-					spoutcopy.CTest01(mappedSubResource.pData, destpixelscrop, crop_rectangle, m_Width, m_Height);
+					try {
+						if (!IsTest) {
+							spoutcopy.rgba2rgba(mappedSubResource.pData, destpixels, width, height, mappedSubResource.RowPitch, bInvert);
+							// This works, no resizing
+							//spoutcopy.CTest01(mappedSubResource.pData, destpixels, m_Width, m_Height);
+
+							// Merge get both buffers at same time
+							//spoutcopy.CTest01(mappedSubResource.pData, destpixels, destpixelscrop, crop_rectangle, m_Width, m_Height);
+
+							// when adding this one, get memory exception error on nvidia card?
+							//spoutcopy.CTest01(mappedSubResource.pData, destpixelscrop, crop_rectangle, m_Width, m_Height);
+							//spoutcopy.CTest01(destpixels, destpixelscrop, crop_rectangle, m_Width, m_Height);
+						}
+						else
+						{
+							//spoutcopy.CTest01(mappedSubResource.pData, destpixelscrop, crop_rectangle, m_Width, m_Height);
+						}
+					}
+					catch (const std::exception& e) {
+						SpoutLogWarning("spoutDX::ReadPixelData - Crash at CTest01");
+					}
 				}
 			}
 		}

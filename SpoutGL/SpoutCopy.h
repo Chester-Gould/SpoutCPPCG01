@@ -40,6 +40,7 @@
 #include <intrin.h> // for cpuid to test for SSE2
 #include <emmintrin.h> // for SSE2
 #include <tmmintrin.h> // for SSSE3
+#include "..\SpoutGL\SpoutUtils.h" // Registry utiities
 
 
 class SPOUT_DLLEXP spoutCopy {
@@ -63,6 +64,8 @@ class SPOUT_DLLEXP spoutCopy {
 		void memcpy_sse2(void* dst, const void* src, size_t size) const;
 
 		// Copy rgba buffers line by line allowing for source pitch using the fastest method
+		void CTest01(const void* rgba_source, void* rgba_dest, void* rgba_dest_crop, RECT crop_rectangle, unsigned int width, unsigned int height) const;
+
 		//void CTest01(const void* source, void* dest, unsigned int width, unsigned int height) const;
 		void CTest01(const void* rgba_source, void* rgba_dest, RECT crop_rectangle, unsigned int width, unsigned int height) const;
 

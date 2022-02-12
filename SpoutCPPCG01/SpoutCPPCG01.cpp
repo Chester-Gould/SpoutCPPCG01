@@ -7,6 +7,8 @@
 //
 #include "framework.h"
 #include "SpoutCPPCG01.h"
+#include "CImg.h"
+using namespace cimg_library;
 
 #define MAX_LOADSTRING 100
 
@@ -197,7 +199,8 @@ void Render()
 			// Update the receiving buffer
 			if (pixelBuffercrop)	delete pixelBuffercrop;
 			//pixelBuffercrop = new unsigned char[g_SenderWidth * g_SenderHeight * 4];
-			pixelBuffercrop = new unsigned char[(crop_rectangle.right - crop_rectangle.left) * (crop_rectangle.bottom - crop_rectangle.top) * 4];
+			//pixelBuffercrop = new unsigned char[(crop_rectangle.right - crop_rectangle.left) * (crop_rectangle.bottom - crop_rectangle.top) * 4];
+			pixelBuffercrop = new unsigned char[100 * 100 * 4];
 
 			// Update the rgba > bgra conversion buffer
 			if (bgraBuffer) delete bgraBuffer;
@@ -489,6 +492,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				DeleteObject(backbrush);
 			}
 			else {
+				
 				BITMAPINFO bmi;
 				ZeroMemory(&bmi, sizeof(BITMAPINFO));
 				
@@ -499,18 +503,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				bmi.bmiHeader.biPlanes = 1;
 				bmi.bmiHeader.biBitCount = 32;
 				bmi.bmiHeader.biCompression = BI_RGB;
-
-
+				
+				
 				BITMAPINFO bmic;
 				ZeroMemory(&bmic, sizeof(BITMAPINFO));
 
 				bmic.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-				bmic.bmiHeader.biSizeImage = (LONG)((crop_rectangle.right - crop_rectangle.left) * (crop_rectangle.bottom - crop_rectangle.top) * 4); // Pixel buffer size
-				bmic.bmiHeader.biWidth = (LONG)(crop_rectangle.right - crop_rectangle.left);   // Width of buffer
-				bmic.bmiHeader.biHeight = (LONG)(crop_rectangle.bottom - crop_rectangle.top);  // Height of buffer
+				bmic.bmiHeader.biSizeImage = 40000;
+				bmic.bmiHeader.biWidth = 100;
+				bmic.bmiHeader.biHeight = 100;
+				//bmic.bmiHeader.biSizeImage = (LONG)((crop_rectangle.right - crop_rectangle.left) * (crop_rectangle.bottom - crop_rectangle.top) * 4); // Pixel buffer size
+				//bmic.bmiHeader.biWidth = (LONG)(crop_rectangle.right - crop_rectangle.left);   // Width of buffer
+				//bmic.bmiHeader.biHeight = (LONG)(crop_rectangle.bottom - crop_rectangle.top);  // Height of buffer
 				bmic.bmiHeader.biPlanes = 1;
 				bmic.bmiHeader.biBitCount = 32;
 				bmic.bmiHeader.biCompression = BI_RGB;
+				
+
+				/*
+				BITMAPINFO bmi;
+				ZeroMemory(&bmi, sizeof(BITMAPINFO));
+
+				bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+				bmi.bmiHeader.biSizeImage = (LONG)((crop_rectangle.right - crop_rectangle.left) * (crop_rectangle.bottom - crop_rectangle.top) * 4); // Pixel buffer size
+				bmi.bmiHeader.biWidth = (LONG)(crop_rectangle.right - crop_rectangle.left);   // Width of buffer
+				bmi.bmiHeader.biHeight = (LONG)(crop_rectangle.bottom - crop_rectangle.top);  // Height of buffer
+				bmi.bmiHeader.biPlanes = 1;
+				bmi.bmiHeader.biBitCount = 32;
+				bmi.bmiHeader.biCompression = BI_RGB;
+				*/
 
 				// If the received sender format is BGRA or BGRX it's a natural match
 				if (g_SenderFormat == 87 || g_SenderFormat == 88) {
@@ -519,32 +540,78 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					// to the window size. The sender can be resized or changed.
 
 					
-					SetStretchBltMode(hdc, COLORONCOLOR); // Fastest method
+					//SetStretchBltMode(hdc, COLORONCOLOR); // Fastest method
 					
+					/*
+					StretchDIBits(hdc,
+						0, 0, (dr.right - dr.left), (dr.bottom - dr.top), // destination rectangle 
+						0, 0, (crop_rectangle.right - crop_rectangle.left), (crop_rectangle.bottom - crop_rectangle.top), // source rectangle 
+						pixelBuffer,
+						&bmi, DIB_RGB_COLORS, SRCCOPY);
+					*/
+					
+					/*
 					StretchDIBits(hdc,
 						0, 0, (dr.right - dr.left), (dr.bottom - dr.top), // destination rectangle 
 						0, 0, (g_SenderWidth), (g_SenderHeight), // source rectangle 
 						pixelBuffer,
 						&bmi, DIB_RGB_COLORS, SRCCOPY);
-					
-					/*
+
+					StretchDIBits(hdc,
+						0, 0, (dr.right - dr.left), (dr.bottom - dr.top), // destination rectangle 
+						0, 0, (crop_rectangle.right - crop_rectangle.left), (crop_rectangle.bottom - crop_rectangle.top), // source rectangle 
+						pixelBuffercrop,
+						&bmic, DIB_RGB_COLORS, SRCCOPY);
+					*/
+
+					//CImg<unsigned char> img1(*pixelBuffer, g_SenderWidth, g_SenderHeight, (g_SenderWidth* g_SenderHeight * 4), 1, 4, true);
+					//CImg<unsigned char> img1(*pixelBuffer, g_SenderWidth, g_SenderHeight, (g_SenderWidth* g_SenderHeight * 4), 1, 4, false);
+					//unsigned char tab[256 * 256] = { 0 };
+
+					//unsigned char tmpdst[(g_SenderWidth * g_SenderHeight * 4)] = pixelBuffer;
+					//CImg<unsigned char> img1(tab, 256, 256, 1, 1, false); // Construct new non-shared image from buffer 'tab'
+					//CImg<unsigned char> img1(*pixelBuffercrop, 100, 100, 1, 1, false);
+
 					Graphics g(hdc);
 					//Gdiplus::Bitmap* imdst = new Gdiplus::Bitmap(&bmic, pixelBuffercrop);
-					Gdiplus::Bitmap* imsrc = new Gdiplus::Bitmap(&bmi, pixelBuffer);
+					//Bitmap imsrc = Bitmap(&bmi, pixelBuffer);
+					//Bitmap imsrc(L"test.jpg");
+					Bitmap imsrc(&bmi, pixelBuffer);
 
-					if (imsrc->GetLastStatus() != Gdiplus::Ok) {
+
+					RectF rf;
+					rf.X = 0;
+					rf.Y = 0;
+					rf.Width = 100;
+					rf.Height = 100;
+					Bitmap* imdst = imsrc.Clone(Rect(300, 0, 100, 100), PixelFormatDontCare);
+
+					//imdst->Clone(rf, imsrc->GetPixelFormat());
+
+					//imdst = Bitmap::Clone(rf, imsrc->GetPixelFormat());
+
+
+					//CImg<unsigned char> alphabet = CImg<unsigned char>("alphabet.png");
+					//CImg<unsigned char> src1 = CImg<unsigned char>(imsrc);
+
+					/*
+					if (imsrc.GetLastStatus() != Gdiplus::Ok) {
 						system("start ."); // opens current folder in windows explorer
 					}
 					else
 					{
 						wchar_t fn[32];
 						wsprintf(fn, L"..\\tmp\\src_%d.jpg", FPSCounter);
-						ImageEncoders::Save(imsrc, fn);
+						ImageEncoders::Save(&imsrc, fn);
 					}
 					*/
 
+					wchar_t fn[32];
+					wsprintf(fn, L"..\\tmp\\dst_%d.jpg", FPSCounter);
+					//ImageEncoders::Save(imdst, fn);
+
 					/*
-					if (imdst->GetLastStatus() != Gdiplus::Ok) {
+					if (*imdst.GetLastStatus() != Gdiplus::Ok) {
 						system("start ."); // opens current folder in windows explorer
 					}
 					else

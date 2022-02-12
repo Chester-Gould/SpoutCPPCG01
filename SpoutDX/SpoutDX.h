@@ -282,10 +282,12 @@ protected :
 	void CreateReceiver(const char * sendername, unsigned int width, unsigned int height, DWORD dwFormat);
 	
 	// Read pixels from a staging texture
-	bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels, unsigned char* destpixelscrop, RECT crop_rectangle,
-		unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap);
+	//bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels, unsigned char* destpixelscrop, RECT crop_rectangle,
+	//	unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap);
 	//bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels, unsigned char* destpixelscrop,
 	//	unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap);
+	bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels, unsigned char* destpixelscrop, RECT crop_rectangle,
+		unsigned int width, unsigned int height, bool bRGB, bool bInvert, bool bSwap, bool IsTest);
 
 	// Read pixels from a staging texture
 	bool ReadPixelData(ID3D11Texture2D* pStagingSource, unsigned char* destpixels,

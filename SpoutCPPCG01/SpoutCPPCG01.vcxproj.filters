@@ -54,6 +54,12 @@
     <ClInclude Include="..\SpoutGL\SpoutUtils.h">
       <Filter>SpoutSDK</Filter>
     </ClInclude>
+    <ClInclude Include="cImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CImg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SpoutCPPCG01.cpp">
@@ -79,6 +85,9 @@
     </ClCompile>
     <ClCompile Include="..\SpoutGL\SpoutUtils.cpp">
       <Filter>SpoutSDK</Filter>
+    </ClCompile>
+    <ClCompile Include="cImage.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
